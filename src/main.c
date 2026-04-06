@@ -12,8 +12,10 @@ int main(int ac, char **av)
         {
             case 'v':
                 arc.verbose = 1;
+                break;
             case '?':
                 print_ping_usage();
+                break;
             default:
                 fprintf(stderr, "ft_ping: invalid option -- '%c'\n", optopt);
                 return 1;
@@ -22,7 +24,7 @@ int main(int ac, char **av)
     if (optind >= ac)
     {
         fprintf(stderr, "ft_ping: missing host operand\n");
-        fprintf(stderr, "Try './ft_ping '-?'' for more information.\n");
+        fprintf(stderr, "Try \"./ft_ping '-?'\" for more information.\n");
         return 1;
     }
     arc.host = av[optind];
