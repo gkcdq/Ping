@@ -3,10 +3,12 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <netdb.h>
 #include <stdio.h>
 #include <getopt.h>
 #include <stdlib.h>
+#include <arpa/inet.h>
+#include <string.h>
+#include <netdb.h>
 
 typedef struct Architecture
 {
@@ -15,7 +17,14 @@ typedef struct Architecture
     int sequence; // 'icmp_seq=++'
     char *host; // ip ou nom de domaine
     int verbose;
-} Architecture; 
+} Architecture;
+
+typedef struct info
+{
+    int family;
+    int sockType;
+    int protocole;
+} Info; 
 
 void    print_ping_usage();
 void    initialise_architecture(Architecture *arc);

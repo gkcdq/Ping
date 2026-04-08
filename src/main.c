@@ -28,6 +28,24 @@ int main(int ac, char **av)
         return 1;
     }
     arc.host = av[optind];
+    struct addrinfo hints;
+    struct addrinfo *res;
+    memset(&hints, 0, sizeof(hints));
+
+    printf("AF_INET vaut : %d\n", AF_INET);         // Affiche 2
+    printf("SOCK_RAW vaut : %d\n", SOCK_RAW);       // Affiche 3
+    printf("IPPROTO_ICMP vaut : %d\n", IPPROTO_ICMP); // Affiche 1
+
+    if (getaddrinfo(arc.host, NULL, &hints, &res) != 0)
+        return (fprintf(stderr, "Error: DNS"), 1);
+
+    hints.ai_family = AF_INET;
+    int sockfd = socket(hints.ai_family, SOCK_RAW, IPPROTO_ICMP);
+    if (sockfd < 0)
+    {
+        perror("socket");
+        return 1;
+    }
 
 }
 
