@@ -1,5 +1,26 @@
 #include "../include/ft_ping.h"
 
+
+unsigned short calculate_checksum(void *addr, int len)
+{
+    unsigned short *packet = (unsigned short *)addr;
+    unsigned int sum = 0;
+    while (len > 1)
+    {
+        sum += *packet;
+        packet++;
+        len -= 2;
+    }
+    if (len == 1)
+    {
+        sum += *(unsigned char *)packet;
+    }
+    sum = (sum >> 16) + (sum & 0xFFFF);
+    sum += (sum >> 16);
+    return (unsigned short)(~sum);
+}
+
+
 int main(int ac, char **av)
 {
     int opt = 0;
@@ -31,26 +52,58 @@ int main(int ac, char **av)
     struct addrinfo hints;
     struct addrinfo *res;
     memset(&hints, 0, sizeof(hints));
-
-    // printf("AF_INET vaut : %d\n", AF_INET);         // Affiche 2
-    // printf("SOCK_RAW vaut : %d\n", SOCK_RAW);       // Affiche 3
-    // printf("IPPROTO_ICMP vaut : %d\n", IPPROTO_ICMP); // Affiche 1
-
+    hints.ai_family = AF_INET;
+    // check si le host existe bien sinon error dns
     if (getaddrinfo(arc.host, NULL, &hints, &res) != 0)
         return (fprintf(stderr, "Error: DNS"), 1);
 
-    hints.ai_family = AF_INET;
+    // pour ouvrir le socket de communication
     int sockfd = socket(hints.ai_family, SOCK_RAW, IPPROTO_ICMP);
     if (sockfd < 0)
     {
         perror("socket");
         return 1;
     }
-    struct timeval tv;
-    struct timezone tz;
-    unsigned int start_time = gettimeofday(&tv, &tz);
-    if (start_time)
-        return (printf("%d\n", start_time));
+    // pour sendto()
+     //// adress
+    struct sockaddr *dest = res->ai_addr;
+    socklen_t dest_len = res->ai_addrlen;
+     //// le paquet
+    struct icmp packet;
+    memset(&packet, 0, sizeof(packet));
+
+    packet.icmp_type = ICMP_ECHO;
+    packet.icmp_code = 0;
+    packet.icmp_id = getpid();
+    packet.icmp_seq = 0;
+    packet.icmp_cksum = 0;
+    packet.icmp_cksum = calculate_checksum(&packet, sizeof(packet));
+
+    // calcul du temps
+    struct timeval start, end;
+    int check = gettimeofday(&start, NULL);
+    if (check == -1)
+        return(fprintf(stderr, "Error: gettimeofday failed"), 1);
+    sendto(sockfd, &packet, sizeof(packet), 0, dest, dest_len);
+    char buf[8888]; struct sockaddr_in *from;
+    socklen_t from_len = sizeof(from);
+    ssize_t bytes_received = recvfrom(sockfd, buf, sizeof(buf), 0, (struct sockaddr *)&from, &from_len);
+    check = gettimeofday(&end, NULL);
+    if (check == -1)
+        return(fprintf(stderr, "Error: gettimeofday failed"), 1);
+    if (bytes_received < 0)
+    {
+        perror("recvfrom");
+    }
+    else
+    {
+        int time = (end.tv_usec - start.tv_usec) * 1000;
+        struct icmp *icmp_res = (struct icmp *)(buf + 20);
+        if (icmp_res->icmp_type == ICMP_ECHOREPLY)
+            printf(" %d: %s\n", time ,arc.host);
+    }
+
+
 }
 
 

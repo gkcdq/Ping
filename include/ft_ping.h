@@ -4,12 +4,17 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
+#include <sys/cdefs.h>
 #include <stdio.h>
 #include <getopt.h>
 #include <stdlib.h>
 #include <arpa/inet.h>
 #include <string.h>
 #include <netdb.h>
+#include <netinet/in_systm.h> // Nécessaire pour certains types de données
+#include <netinet/ip.h>       // Pour la structure IP
+#include <netinet/ip_icmp.h>  // C'est ICI que struct icmp et ICMP_ECHO sont définis
+#include <unistd.h>
 
 typedef struct Architecture
 {
