@@ -71,23 +71,25 @@ int main(int ac, char **av)
      //// le paquet
     struct icmp packet;
     memset(&packet, 0, sizeof(packet));
-
     packet.icmp_type = ICMP_ECHO;
     packet.icmp_code = 0;
     packet.icmp_id = getpid();
     packet.icmp_seq = 0;
     packet.icmp_cksum = 0;
     packet.icmp_cksum = calculate_checksum(&packet, sizeof(packet));
-
+    int seq_index = 0;
     while(1)
     {
+        packet.icmp_seq = htons(seq_index++); // Utilise htons pour le réseau
+        packet.icmp_cksum = 0;            // Reset obligatoire !
+        packet.icmp_cksum = calculate_checksum(&packet, sizeof(packet));
         // calcul du temps
         struct timeval start, end;
         int check = gettimeofday(&start, NULL);
         if (check == -1)
             return(fprintf(stderr, "Error: gettimeofday failed"), 1);
         sendto(sockfd, &packet, sizeof(packet), 0, dest, dest_len);
-        char buf[8888]; struct sockaddr_in *from;
+        char buf[8888]; struct sockaddr_in from;
         socklen_t from_len = sizeof(from);
         ssize_t bytes_received = recvfrom(sockfd, buf, sizeof(buf), 0, (struct sockaddr *)&from, &from_len);
         check = gettimeofday(&end, NULL);
@@ -106,10 +108,9 @@ int main(int ac, char **av)
             {
                 printf("%zu bytes from %s: icmp_seq=%d ttl=%d time=%.2f ms\n",
                 bytes_received, arc.host, ntohs(icmp_res->icmp_seq), ip->ttl, time_ms);
-                packet.icmp_seq++;
             }
         }
-        usleep(3000);
+        sleep(1);
     }
 }
 
