@@ -16,6 +16,7 @@
 #include <netinet/ip_icmp.h>  // C'est ICI que struct icmp et ICMP_ECHO sont définis
 #include <unistd.h>
 #include <signal.h>
+#include <resolv.h>
 
 typedef struct Architecture
 {

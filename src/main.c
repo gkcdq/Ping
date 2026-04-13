@@ -146,8 +146,8 @@ int main(int ac, char **av)
         printf("rtt min/avg/max = %.3f/%.3f/%.3f ms\n", 
             min_rtt, sum_rtt / received, max_rtt);
     freeaddrinfo(res);
-    free(arc.host);
     close(sockfd);
+    res_nclose(&_res);
     return 0;
 }
 
