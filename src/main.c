@@ -104,12 +104,21 @@ int main(int ac, char **av)
             double time_ms = (end.tv_sec - start.tv_sec) * 1000.0 + (end.tv_usec - start.tv_usec) / 1000.0;
             struct iphdr *ip = (struct iphdr *)buf;
             struct icmp *icmp_res = (struct icmp *)(buf + (ip->ihl * 4));
+            char server_name[8888];
+            int s = getnameinfo((struct sockaddr *)&from, sizeof(from),server_name , sizeof(server_name), NULL, 0, NI_NAMEREQD);
             if (icmp_res->icmp_type == ICMP_ECHOREPLY)
             {
-
-                printf("%zu bytes from %s: icmp_seq=%d ttl=%d time=%.2f ms\n",
-                bytes_received, inet_ntoa(from.sin_addr), ntohs(icmp_res->icmp_seq), ip->ttl, time_ms);
-            }
+                if (s == 0)
+                {
+                    printf("%zu bytes from %s: icmp_seq=%d ttl=%d time=%.2f ms\n",
+                    bytes_received, server_name, ntohs(icmp_res->icmp_seq), ip->ttl, time_ms);
+                }
+                else
+                {
+                    printf("YAYAY %zu bytes from %s: icmp_seq=%d ttl=%d time=%.2f ms\n",
+                    bytes_received, inet_ntoa(from.sin_addr), ntohs(icmp_res->icmp_seq), ip->ttl, time_ms);
+                }
+            }        
         }
         sleep(1);
     }
