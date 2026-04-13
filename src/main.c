@@ -104,6 +104,7 @@ int main(int ac, char **av)
             if (icmp_res->icmp_type == ICMP_ECHOREPLY)
                 printf(" %d: %s\n", time ,arc.host);
         }
+        usleep(3000);
     }
 }
 
