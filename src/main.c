@@ -1,5 +1,6 @@
 #include "../include/ft_ping.h"
 
+int signal_sig = 0;
 
 unsigned short calculate_checksum(void *addr, int len)
 {
@@ -20,6 +21,11 @@ unsigned short calculate_checksum(void *addr, int len)
     return (unsigned short)(~sum);
 }
 
+
+void handle_sigint()
+{
+    signal_sig = 1;
+}
 
 int main(int ac, char **av)
 {
@@ -77,8 +83,12 @@ int main(int ac, char **av)
     packet.icmp_seq = 0;
     packet.icmp_cksum = 0;
     packet.icmp_cksum = calculate_checksum(&packet, sizeof(packet));
+    int sent = 0;
+    int received = 0;
+    double min_rtt = 0, max_rtt = 0, sum_rtt = 0;
     int seq_index = 0;
-    while(1)
+    signal(SIGINT, handle_sigint);
+    while(signal_sig == 0)
     {
         packet.icmp_seq = htons(seq_index++); // Utilise htons pour le réseau
         packet.icmp_cksum = 0;            // Reset obligatoire !
@@ -98,6 +108,7 @@ int main(int ac, char **av)
         if (bytes_received < 0)
         {
             perror("recvfrom");
+            break;
         }
         else
         {
@@ -108,6 +119,10 @@ int main(int ac, char **av)
             int s = getnameinfo((struct sockaddr *)&from, sizeof(from),server_name , sizeof(server_name), NULL, 0, NI_NAMEREQD);
             if (icmp_res->icmp_type == ICMP_ECHOREPLY)
             {
+                received++;
+                if (received == 1 || time_ms < min_rtt) min_rtt = time_ms;
+                if (time_ms > max_rtt) max_rtt = time_ms;
+                sum_rtt += time_ms;
                 if (s == 0)
                 {
                     printf("%zu bytes from %s: icmp_seq=%d ttl=%d time=%.2f ms\n",
@@ -122,6 +137,15 @@ int main(int ac, char **av)
         }
         sleep(1);
     }
+    printf("\n--- %s ping statistics ---\n", arc.host);
+    printf("%d packets transmitted, %d received, %d%% packet loss\n",
+        sent, received, (sent > 0) ? ((sent - received) * 100 / sent) : 0);
+    if (received > 0)
+        printf("rtt min/avg/max = %.3f/%.3f/%.3f ms\n", 
+            min_rtt, sum_rtt / received, max_rtt);
+    freeaddrinfo(res);
+    close(sockfd);
+    return 0;
 }
 
 
