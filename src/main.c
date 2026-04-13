@@ -176,8 +176,8 @@ int main(int ac, char **av)
     }
     printf("\n--- %s ping statistics ---\n", arc.host);
     if (error != 0)
-        printf("%d packets transmitted, %d received, +%d error, %d%% packet loss\n",
-        sent, received, error, (sent > 0) ? ((sent - received) * 100 / sent) : 0);
+        printf("%d packets transmitted, %d received, +%d error, %d%% packet loss, %d time\n",
+        sent, received, error, (sent > 0) ? ((sent - received) * 100 / sent) : 0, error_time);
     else
         printf("%d packets transmitted, %d received, %d%% packet loss\n",
         sent, received, (sent > 0) ? ((sent - received) * 100 / sent) : 0);
