@@ -106,8 +106,9 @@ int main(int ac, char **av)
             struct icmp *icmp_res = (struct icmp *)(buf + (ip->ihl * 4));
             if (icmp_res->icmp_type == ICMP_ECHOREPLY)
             {
+
                 printf("%zu bytes from %s: icmp_seq=%d ttl=%d time=%.2f ms\n",
-                bytes_received, arc.host, ntohs(icmp_res->icmp_seq), ip->ttl, time_ms);
+                bytes_received, inet_ntoa(from.sin_addr), ntohs(icmp_res->icmp_seq), ip->ttl, time_ms);
             }
         }
         sleep(1);
