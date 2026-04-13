@@ -89,6 +89,11 @@ int main(int ac, char **av)
     double min_rtt = 0, max_rtt = 0, sum_rtt = 0;
     int seq_index = 0;
     signal(SIGINT, handle_sigint);
+    // pour teste le -v
+    int ttl_val = 1;
+    if (setsockopt(sockfd, IPPROTO_IP, IP_TTL, &ttl_val, sizeof(ttl_val)) < 0)
+        perror("setsockopt ttl");
+    //
     while(signal_sig == 0)
     {
         packet.icmp_seq = htons(seq_index++); // Utilise htons pour le réseau
@@ -135,7 +140,13 @@ int main(int ac, char **av)
                     printf("YAYAY %zu bytes from %s: icmp_seq=%d ttl=%d time=%.2f ms\n",
                     bytes_received, inet_ntoa(from.sin_addr), ntohs(icmp_res->icmp_seq), ip->ttl, time_ms);
                 }
-            }        
+            }
+            else if (arc.verbose == 1)
+            {
+                char error_ip[INET_ADDRSTRLEN];
+                inet_ntop(AF_INET, &(from.sin_addr), error_ip, INET_ADDRSTRLEN);
+                printf("IP Hdr: ihl=%d, id=%d, ttl=%d, proto=%d\n", ip->ihl, ntohs(ip->id), ip->ttl, ip->protocol);
+            }   
         }
         sleep(1);
     }
