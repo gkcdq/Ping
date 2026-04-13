@@ -145,6 +145,7 @@ int main(int ac, char **av)
             {
                 char error_ip[INET_ADDRSTRLEN];
                 inet_ntop(AF_INET, &(from.sin_addr), error_ip, INET_ADDRSTRLEN);
+                printf("From %s: type=%d, code=%d\n", error_ip, icmp_res->icmp_type, icmp_res->icmp_code);
                 printf("IP Hdr: ihl=%d, id=%d, ttl=%d, proto=%d\n", ip->ihl, ntohs(ip->id), ip->ttl, ip->protocol);
             }   
         }
