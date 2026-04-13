@@ -88,6 +88,7 @@ int main(int ac, char **av)
     int received = 0;
     double min_rtt = 0, max_rtt = 0, sum_rtt = 0;
     int error = 0;
+    int error_time = 0;
     int seq_index = 0;
     signal(SIGINT, handle_sigint);
     // pour teste le -v
@@ -152,6 +153,7 @@ int main(int ac, char **av)
                 if (icmp_res->icmp_type == ICMP_TIME_EXCEEDED)
                 {
                     error++;
+                    error_time += time_ms;
                     // On va chercher le header ICMP original qui est caché après :
                     // IP Header Box (20b) + ICMP Error (8b) + IP Header Original (20b)
                     // Le décalage est donc : (ip_original->ihl * 4) + 8 + (ip_original_encapsulé->ihl * 4)
