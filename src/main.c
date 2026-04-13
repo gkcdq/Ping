@@ -99,6 +99,7 @@ int main(int ac, char **av)
         if (check == -1)
             return(fprintf(stderr, "Error: gettimeofday failed"), 1);
         sendto(sockfd, &packet, sizeof(packet), 0, dest, dest_len);
+        sent++;
         char buf[8888]; struct sockaddr_in from;
         socklen_t from_len = sizeof(from);
         ssize_t bytes_received = recvfrom(sockfd, buf, sizeof(buf), 0, (struct sockaddr *)&from, &from_len);
