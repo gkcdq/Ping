@@ -99,10 +99,12 @@ int main(int ac, char **av)
         }
         else
         {
-            int time = (end.tv_usec - start.tv_usec) * 1000;
-            struct icmp *icmp_res = (struct icmp *)(buf + 20);
+            double time = ((end.tv_sec - start.tv_sec) * 1000) + ((end.tv_usec - start.tv_usec) / 1000);
+            struct iphdr *ip = (struct iphdr *)buf;
+            struct icmp *icmp_res = (struct icmp *)(buf + (ip->ihl * 4));
             if (icmp_res->icmp_type == ICMP_ECHOREPLY)
-                printf(" %d: %s\n", time ,arc.host);
+                printf("%zu bytes from %s: icmp_seq=%d ttl=%d time=%.3f ms\n",
+                bytes_received, arc.host, ntohs(icmp_res->icmp_seq), ip->ttl, time);
         }
         usleep(300000);
     }
