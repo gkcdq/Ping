@@ -79,31 +79,32 @@ int main(int ac, char **av)
     packet.icmp_cksum = 0;
     packet.icmp_cksum = calculate_checksum(&packet, sizeof(packet));
 
-    // calcul du temps
-    struct timeval start, end;
-    int check = gettimeofday(&start, NULL);
-    if (check == -1)
-        return(fprintf(stderr, "Error: gettimeofday failed"), 1);
-    sendto(sockfd, &packet, sizeof(packet), 0, dest, dest_len);
-    char buf[8888]; struct sockaddr_in *from;
-    socklen_t from_len = sizeof(from);
-    ssize_t bytes_received = recvfrom(sockfd, buf, sizeof(buf), 0, (struct sockaddr *)&from, &from_len);
-    check = gettimeofday(&end, NULL);
-    if (check == -1)
-        return(fprintf(stderr, "Error: gettimeofday failed"), 1);
-    if (bytes_received < 0)
+    while(1)
     {
-        perror("recvfrom");
+        // calcul du temps
+        struct timeval start, end;
+        int check = gettimeofday(&start, NULL);
+        if (check == -1)
+            return(fprintf(stderr, "Error: gettimeofday failed"), 1);
+        sendto(sockfd, &packet, sizeof(packet), 0, dest, dest_len);
+        char buf[8888]; struct sockaddr_in *from;
+        socklen_t from_len = sizeof(from);
+        ssize_t bytes_received = recvfrom(sockfd, buf, sizeof(buf), 0, (struct sockaddr *)&from, &from_len);
+        check = gettimeofday(&end, NULL);
+        if (check == -1)
+            return(fprintf(stderr, "Error: gettimeofday failed"), 1);
+        if (bytes_received < 0)
+        {
+            perror("recvfrom");
+        }
+        else
+        {
+            int time = (end.tv_usec - start.tv_usec) * 1000;
+            struct icmp *icmp_res = (struct icmp *)(buf + 20);
+            if (icmp_res->icmp_type == ICMP_ECHOREPLY)
+                printf(" %d: %s\n", time ,arc.host);
+        }
     }
-    else
-    {
-        int time = (end.tv_usec - start.tv_usec) * 1000;
-        struct icmp *icmp_res = (struct icmp *)(buf + 20);
-        if (icmp_res->icmp_type == ICMP_ECHOREPLY)
-            printf(" %d: %s\n", time ,arc.host);
-    }
-
-
 }
 
 
