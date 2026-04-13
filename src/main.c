@@ -68,6 +68,7 @@ int main(int ac, char **av)
     if (sockfd < 0)
     {
         perror("socket");
+        freeaddrinfo(res);
         return 1;
     }
     // pour sendto()
@@ -145,6 +146,7 @@ int main(int ac, char **av)
         printf("rtt min/avg/max = %.3f/%.3f/%.3f ms\n", 
             min_rtt, sum_rtt / received, max_rtt);
     freeaddrinfo(res);
+    free(arc.host);
     close(sockfd);
     return 0;
 }
