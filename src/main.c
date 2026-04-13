@@ -109,7 +109,7 @@ int main(int ac, char **av)
                 packet.icmp_seq++;
             }
         }
-        usleep(300000);
+        usleep(3000);
     }
 }
 
