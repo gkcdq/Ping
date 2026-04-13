@@ -87,6 +87,7 @@ int main(int ac, char **av)
     int sent = 0;
     int received = 0;
     double min_rtt = 0, max_rtt = 0, sum_rtt = 0;
+    int error = 0;
     int seq_index = 0;
     signal(SIGINT, handle_sigint);
     // pour teste le -v
@@ -141,18 +142,42 @@ int main(int ac, char **av)
                     bytes_received, inet_ntoa(from.sin_addr), ntohs(icmp_res->icmp_seq), ip->ttl, time_ms);
                 }
             }
-            else if (arc.verbose == 1)
+            else if (arc.verbose)
             {
-                char error_ip[INET_ADDRSTRLEN];
-                inet_ntop(AF_INET, &(from.sin_addr), error_ip, INET_ADDRSTRLEN);
-                printf("From %s: type=%d, code=%d\n", error_ip, icmp_res->icmp_type, icmp_res->icmp_code);
-                printf("IP Hdr: ihl=%d, id=%d, ttl=%d, proto=%d\n", ip->ihl, ntohs(ip->id), ip->ttl, ip->protocol);
-            }   
+                char host_name[NI_MAXHOST];
+                // Tentative de résolution inverse (pour afficher _gateway ou autre)
+                if (getnameinfo((struct sockaddr *)&from, from_len, host_name, sizeof(host_name), NULL, 0, 0) != 0)
+                    strncpy(host_name, inet_ntoa(from.sin_addr), sizeof(host_name));
+
+                if (icmp_res->icmp_type == ICMP_TIME_EXCEEDED)
+                {
+                    error++;
+                    // On va chercher le header ICMP original qui est caché après :
+                    // IP Header Box (20b) + ICMP Error (8b) + IP Header Original (20b)
+                    // Le décalage est donc : (ip_original->ihl * 4) + 8 + (ip_original_encapsulé->ihl * 4)
+                    struct iphdr *inner_ip = (struct iphdr *)((char *)icmp_res + 8);
+                    struct icmp *inner_icmp = (struct icmp *)((char *)inner_ip + (inner_ip->ihl * 4));
+                    
+                    printf("From %s (%s) icmp_seq=%d Time to live exceeded\n", 
+                        host_name, inet_ntoa(from.sin_addr), ntohs(inner_icmp->icmp_seq));
+                }
+                else
+                {
+                    // Pour les autres types d'erreurs en verbose
+                    printf("From %s: type=%d code=%d\n", host_name, icmp_res->icmp_type, icmp_res->icmp_code);
+                }
+            }
+            else
+                break;   
         }
         sleep(1);
     }
     printf("\n--- %s ping statistics ---\n", arc.host);
-    printf("%d packets transmitted, %d received, %d%% packet loss\n",
+    if (error != 0)
+        printf("%d packets transmitted, %d received, %d error, %d%% packet loss\n",
+        sent, received, error, (sent > 0) ? ((sent - received) * 100 / sent) : 0);
+    else
+        printf("%d packets transmitted, %d received, %d%% packet loss\n",
         sent, received, (sent > 0) ? ((sent - received) * 100 / sent) : 0);
     if (received > 0)
         printf("rtt min/avg/max = %.3f/%.3f/%.3f ms\n", 
