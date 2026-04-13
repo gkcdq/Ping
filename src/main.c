@@ -90,9 +90,9 @@ int main(int ac, char **av)
     int seq_index = 0;
     signal(SIGINT, handle_sigint);
     // pour teste le -v
-    // int ttl_val = 1;
-    // if (setsockopt(sockfd, IPPROTO_IP, IP_TTL, &ttl_val, sizeof(ttl_val)) < 0)
-    //     perror("setsockopt ttl");
+    int ttl_val = 1;
+    if (setsockopt(sockfd, IPPROTO_IP, IP_TTL, &ttl_val, sizeof(ttl_val)) < 0)
+        perror("setsockopt ttl");
     //
     while(signal_sig == 0)
     {
