@@ -77,19 +77,18 @@ int main(int ac, char **av)
 
     arc.host = av[optind];
 
-    // Résolution DNS
     struct addrinfo hints;
     struct addrinfo *res;
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_INET;
-    if (getaddrinfo(arc.host, NULL, &hints, &res) != 0)
+    if (getaddrinfo(arc.host, NULL, &hints, &res) != 0) // swap name pour ip
     {
         fprintf(stderr, "ft_ping: %s: Name or service not known\n", arc.host);
         return 1;
     }
 
-    // Ouverture du socket raw ICMP
-    int sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+
+    int sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP); // pour open le raw socket
     if (sockfd < 0)
     {
         perror("socket");
@@ -97,12 +96,10 @@ int main(int ac, char **av)
         return 1;
     }
 
-    // TTL à 1 pour tester ICMP_TIME_EXCEEDED (retirer en prod)
-    int ttl_val = 1;
+    int ttl_val = 84; // 1 pour test TTL
     if (setsockopt(sockfd, SOL_IP, IP_TTL, &ttl_val, sizeof(ttl_val)) < 0)
         perror("setsockopt ttl");
 
-    // Timeout sur recvfrom pour éviter le blocage infini
     struct timeval timeout;
     timeout.tv_sec = 1;
     timeout.tv_usec = 0;
@@ -112,7 +109,7 @@ int main(int ac, char **av)
     struct sockaddr *dest     = res->ai_addr;
     socklen_t        dest_len = res->ai_addrlen;
 
-    // Récupère l'IP de destination sous forme lisible pour l'affichage initial
+    // recup l'ip destinataire pour lui donner un nom
     char dest_ip[INET_ADDRSTRLEN];
     inet_ntop(AF_INET, &((struct sockaddr_in *)dest)->sin_addr, dest_ip, sizeof(dest_ip));
     if (arc.verbose)
@@ -161,20 +158,12 @@ int main(int ac, char **av)
         }
         sent++;
 
-        char            buf[4096];
+        char buf[4012];
         struct sockaddr_in from;
-        socklen_t        from_len = sizeof(from);
-        ssize_t          bytes_received;
+        socklen_t from_len = sizeof(from);
+        ssize_t bytes_received;
 
         bytes_received = recvfrom(sockfd, buf, sizeof(buf), 0, (struct sockaddr *)&from, &from_len);
-        
-        // struct iphdr *ipp = (struct iphdr *)buf; // 'buf' est ton buffer de recvfrom
-        // int ip_header_len = ipp->ihl * 4;        // Taille dynamique de l'en-tête IP
-
-        // // La taille ICMP réelle est la différence
-        // bytes_received = bytes_received - ip_header_len;
-
-
         
         if (gettimeofday(&end, NULL) == -1)
         {
@@ -201,22 +190,21 @@ int main(int ac, char **av)
 
         if (icmp_res->icmp_type == ICMP_ECHOREPLY)
         {
-            // Filtre : ne traiter que nos propres paquets
-            if (icmp_res->icmp_id != htons(getpid()))
+            if (icmp_res->icmp_id != htons(getpid())) // les packets de notre pid uniquement
             {
                 sleep(1);
                 continue;
             }
-
             received++;
+
             if (received == 1 || time_ms < min_rtt) min_rtt = time_ms;
-            if (time_ms > max_rtt)                   max_rtt = time_ms;
+            if (time_ms > max_rtt) max_rtt = time_ms;
             sum_rtt += time_ms;
 
-            // Résolution inverse (optionnelle)
-            char server_name[NI_MAXHOST];
             int ip_header_len = ip->ihl * 4;        
             ssize_t showBytes = bytes_received - ip_header_len;
+
+            char server_name[NI_MAXHOST];
             int  s = getnameinfo((struct sockaddr *)&from, from_len, server_name, sizeof(server_name), NULL, 0, NI_NAMEREQD);
             if (s == 0)
                 printf("%zd bytes from %s (%s): icmp_seq=%d ttl=%d time=%.3f ms\n",
@@ -262,22 +250,13 @@ int main(int ac, char **av)
             continue;
         sleep(1);
     }
-
-    // Statistiques finales
     printf("\n--- %s ping statistics ---\n", arc.host);
     if (errors > 0)
-        printf("%d packets transmitted, %d received, +%d errors, %d%% packet loss\n",
-            sent, received, errors,
-            (sent > 0) ? ((sent - received) * 100 / sent) : 0);
+        printf("%d packets transmitted, %d received, +%d errors, %d%% packet loss\n", sent, received, errors, (sent > 0) ? ((sent - received) * 100 / sent) : 0);
     else
-        printf("%d packets transmitted, %d received, %d%% packet loss\n",
-            sent, received,
-            (sent > 0) ? ((sent - received) * 100 / sent) : 0);
-
+        printf("%d packets transmitted, %d received, %d%% packet loss\n", sent, received, (sent > 0) ? ((sent - received) * 100 / sent) : 0);
     if (received > 0)
-        printf("rtt min/avg/max = %.3f/%.3f/%.3f ms\n",
-            min_rtt, sum_rtt / received, max_rtt);
-
+        printf("rtt min/avg/max = %.3f/%.3f/%.3f ms\n", min_rtt, sum_rtt / received, max_rtt);
     freeaddrinfo(res);
     close(sockfd);
     return 0;
