@@ -3,10 +3,12 @@ CC      = cc
 CFLAGS  = -Wall -Wextra -Werror -Iinclude
 SRC_DIR = src
 OBJ_DIR = obj
-SRCS    = $(shell find $(SRC_DIR) -name "*.c")
-OBJS    = $(SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
+SRCS = $(shell find $(SRC_DIR) -name "*.c")
+OBJS = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRCS))
 
 all: $(NAME)
+	@echo "SRCS = $(SRCS)"
+	@echo "OBJS = $(OBJS)"
 
 $(NAME): $(OBJS)
 	$(CC) $(OBJS) -o $(NAME)

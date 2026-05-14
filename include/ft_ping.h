@@ -17,6 +17,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <resolv.h>
+#include <errno.h>
 
 typedef struct Architecture
 {
