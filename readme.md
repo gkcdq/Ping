@@ -9,7 +9,8 @@ _This project has been created as part of the 42 curriculum by tmilin._
 This project uses RAW sockets to craft `ICMP` (Echo Request) control packets and process network responses (Echo Reply or error messages).
 
 ## Result
-<img width="747" height="177" alt="image" src="https://github.com/user-attachments/assets/8d0c3e17-16e4-4569-94c0-7a29f7d84a86" />
+<img width="746" height="177" alt="image" src="https://github.com/user-attachments/assets/98c1b060-06fe-4cda-8453-377b93a987d7" />
+
 
 
 
