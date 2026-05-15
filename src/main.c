@@ -96,7 +96,7 @@ int main(int ac, char **av)
         return 1;
     }
 
-    int ttl_val = 84; // 1 pour test TTL
+    int ttl_val = 84; ///////////////////////////////////////////////////////////////////////////
     if (setsockopt(sockfd, SOL_IP, IP_TTL, &ttl_val, sizeof(ttl_val)) < 0)
         perror("setsockopt ttl");
 
@@ -173,7 +173,6 @@ int main(int ac, char **av)
 
         if (bytes_received < 0)
         {
-            // EAGAIN = timeout SO_RCVTIMEO, on continue simplement
             if (errno == EAGAIN || errno == EWOULDBLOCK)
             {
                 printf("Request timeout for icmp_seq %d\n", seq_index - 1);
@@ -207,13 +206,9 @@ int main(int ac, char **av)
             char server_name[NI_MAXHOST];
             int  s = getnameinfo((struct sockaddr *)&from, from_len, server_name, sizeof(server_name), NULL, 0, NI_NAMEREQD);
             if (s == 0)
-                printf("%zd bytes from %s (%s): icmp_seq=%d ttl=%d time=%.3f ms\n",
-                    reduceBytes(showBytes), server_name, inet_ntoa(from.sin_addr),
-                    ntohs(icmp_res->icmp_seq), ip->ttl, time_ms);
+                printf("%zd bytes from %s (%s): icmp_seq=%d ttl=%d time=%.3f ms\n", reduceBytes(showBytes), server_name, inet_ntoa(from.sin_addr), ntohs(icmp_res->icmp_seq), ip->ttl, time_ms);
             else
-                printf("%zd bytes from %s: icmp_seq=%d ttl=%d time=%.3f ms\n",
-                    reduceBytes(showBytes), inet_ntoa(from.sin_addr),
-                    ntohs(icmp_res->icmp_seq), ip->ttl, time_ms);
+                printf("%zd bytes from %s: icmp_seq=%d ttl=%d time=%.3f ms\n", reduceBytes(showBytes), inet_ntoa(from.sin_addr), ntohs(icmp_res->icmp_seq), ip->ttl, time_ms);
         }
         else if (arc.verbose)
         {
@@ -224,7 +219,6 @@ int main(int ac, char **av)
 
             if (icmp_res->icmp_type == ICMP_TIME_EXCEEDED)
             {
-                // Structure : IP (outer) | ICMP error (8B) | IP (inner) | ICMP (original)
                 struct iphdr *inner_ip   = (struct iphdr *)((char *)icmp_res + 8);
                 struct icmp  *inner_icmp = (struct icmp *)((char *)inner_ip + (inner_ip->ihl * 4));
 
@@ -235,15 +229,11 @@ int main(int ac, char **av)
                 }
 
                 errors++;
-                printf("From %s (%s): icmp_seq=%d Time to live exceeded\n",
-                    host_name, inet_ntoa(from.sin_addr),
-                    ntohs(inner_icmp->icmp_seq));
+                printf("From %s (%s): icmp_seq=%d Time to live exceeded\n", host_name, inet_ntoa(from.sin_addr), ntohs(inner_icmp->icmp_seq));
             }
             else
             {
-                printf("From %s (%s): type=%d code=%d\n",
-                    host_name, inet_ntoa(from.sin_addr),
-                    icmp_res->icmp_type, icmp_res->icmp_code);
+                printf("From %s (%s): type=%d code=%d\n", host_name, inet_ntoa(from.sin_addr), icmp_res->icmp_type, icmp_res->icmp_code);
             }
         }
         else
